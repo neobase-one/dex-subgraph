@@ -31,7 +31,8 @@ function isCompleteMint(mintId: string): boolean {
 
 export function handleTransfer(event: Transfer): void {
   // ignore initial transfers for first adds
-  if (event.params.to.toHexString() == ADDRESS_ZERO && event.params.value.equals(BigInt.fromI32(1000))) {
+  // if (event.params.to.toHexString() == ADDRESS_ZERO && event.params.value.equals(BigInt.fromI32(1000))) {
+  if (event.params.to.toHexString() == ADDRESS_ZERO && event.params.amount.equals(BigInt.fromI32(1000))) {
     return
   }
 
@@ -49,7 +50,8 @@ export function handleTransfer(event: Transfer): void {
   let pairContract = PairContract.bind(event.address)
 
   // liquidity token amount being transfered
-  let value = convertTokenToDecimal(event.params.value, BI_18)
+  // let value = convertTokenToDecimal(event.params.value, BI_18)
+  let value = convertTokenToDecimal(event.params.amount, BI_18)
 
   // get or create transaction
   let transaction = Transaction.load(transactionHash)
