@@ -78,16 +78,16 @@ export class TokenDefinition {
 
     // Add Note
     let tokenNote = new TokenDefinition(
-      Address.fromString('0x4e71A2E537B7f9D9413D3991D37958c0b5e1e503'),
+      Address.fromString('0x4e71a2e537b7f9d9413d3991d37958c0b5e1e503'),
       'NOTE',
-      'Note',
+      'NOTE',
       BigInt.fromI32(18)
     );
     staticDefinitions.push(tokenNote);
 
     // Add USDC
     let tokenUsdc = new TokenDefinition(
-      Address.fromString('0x80b5a32E4F032B2a058b4F29EC95EEfEEB87aDcd'),
+      Address.fromString('0x80b5a32e4f032b2a058b4f29ec95eefeeb87adcd'),
       'USDC',
       'USDC',
       BigInt.fromI32(6)
@@ -96,7 +96,7 @@ export class TokenDefinition {
 
     // Add USDT
     let tokenUsdt = new TokenDefinition(
-      Address.fromString('0xd567B3d7B8FE3C79a1AD8dA978812cfC4Fa05e75'),
+      Address.fromString('0xd567b3d7b8fe3c79a1ad8da978812cfc4fa05e75'),
       'USDT',
       'USDT',
       BigInt.fromI32(6)
@@ -105,7 +105,7 @@ export class TokenDefinition {
 
     // Add ATOM
     let tokenAtom = new TokenDefinition(
-      Address.fromString('0xecEEEfCEE421D8062EF8d6b4D814efe4dc898265'),
+      Address.fromString('0xeceeefcee421d8062ef8d6b4d814efe4dc898265'),
       'ATOM',
       'ATOM',
       BigInt.fromI32(6)
@@ -114,7 +114,7 @@ export class TokenDefinition {
 
     // Add ETH
     let tokenEth = new TokenDefinition(
-      Address.fromString('0x5FD55A1B9FC24967C4dB09C513C3BA0DFa7FF687'),
+      Address.fromString('0x5fd55a1b9fc24967c4db09c513c3ba0dfa7ff687'),
       'ETH',
       'ETH',
       BigInt.fromI32(18)
@@ -123,7 +123,7 @@ export class TokenDefinition {
 
     // Add wCANTO
     let tokenWeth = new TokenDefinition(
-      Address.fromString('0x826551890Dc65655a0Aceca109aB11AbDbD7a07B'),
+      Address.fromString('0x826551890dc65655a0aceca109ab11abdbd7a07b'),
       'wCANTO',
       'wCANTO',
       BigInt.fromI32(18)
