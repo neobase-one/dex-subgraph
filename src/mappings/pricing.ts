@@ -1,7 +1,8 @@
 /* eslint-disable prefer-const */
 import { Pair, Token, Bundle } from '../types/schema'
 import { BigDecimal, Address, BigInt } from '@graphprotocol/graph-ts/index'
-import { ZERO_BD, factoryContract, ADDRESS_ZERO, ONE_BD, UNTRACKED_PAIRS } from './helpers'
+import { ZERO_BD, factoryContract, ADDRESS_ZERO, ONE_BD, UNTRACKED_PAIRS, FACTORY_ADDRESS } from './helpers'
+import { Factory as FactoryContract } from '../types/templates/Pair/Factory'
 
 // const WETH_ADDRESS = '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2'
 // const USDC_WETH_PAIR = '0xb4e16d0168e52d35cacd2c6185b44281ec28c9dc' // created 10008355
@@ -10,7 +11,7 @@ import { ZERO_BD, factoryContract, ADDRESS_ZERO, ONE_BD, UNTRACKED_PAIRS } from 
 
 // for canto, ETH ~ NOTE
 const WETH_ADDRESS = '0x4e71a2e537b7f9d9413d3991d37958c0b5e1e503' // NOTE
-const USDC_WETH_PAIR = '0x9571997a66d63958e1b3de9647c22bd6b9e7228c' // USDC_NOTE_PAIR block 
+const USDC_WETH_PAIR = '0x9571997a66d63958e1b3de9647c22bd6b9e7228c' // USDC_NOTE_PAIR block
 const USDT_WETH_PAIR = '0x35db1f3a6a6f07f82c76fcc415db6cfb1a7df833' // USDT_NOTE_PAIR
 
 export function getEthPriceInUSD(): BigDecimal {
@@ -84,12 +85,12 @@ export function getEthPriceInUSD(): BigDecimal {
 // ]
 
 let WHITELIST: string[] = [
-  "0x4e71a2e537b7f9d9413d3991d37958c0b5e1e503", // NOTE
-  "0x80b5a32e4f032b2a058b4f29ec95eefeeb87adcd", // USDC
-  "0xd567b3d7b8fe3c79a1ad8da978812cfc4fa05e75", // USDT
-  "0xeceeefcee421d8062ef8d6b4d814efe4dc898265", // ATOM
-  "0x5fd55a1b9fc24967c4db09c513c3ba0dfa7ff687", // ETH
-  "0x826551890dc65655a0aceca109ab11abdbd7a07b", // wCANTO
+  '0x4e71a2e537b7f9d9413d3991d37958c0b5e1e503', // NOTE
+  '0x80b5a32e4f032b2a058b4f29ec95eefeeb87adcd', // USDC
+  '0xd567b3d7b8fe3c79a1ad8da978812cfc4fa05e75', // USDT
+  '0xeceeefcee421d8062ef8d6b4d814efe4dc898265', // ATOM
+  '0x5fd55a1b9fc24967c4db09c513c3ba0dfa7ff687', // ETH
+  '0x826551890dc65655a0aceca109ab11abdbd7a07b' // wCANTO
 ]
 
 // minimum liquidity required to count towards tracked volume for pairs with small # of Lps
@@ -208,21 +209,183 @@ export function getTrackedLiquidityUSD(
   let price0 = token0.derivedETH.times(bundle.ethPrice)
   let price1 = token1.derivedETH.times(bundle.ethPrice)
 
+  let TWO_BD = BigDecimal.fromString('2')
   // both are whitelist tokens, take average of both amounts
   if (WHITELIST.includes(token0.id) && WHITELIST.includes(token1.id)) {
-    return tokenAmount0.times(price0).plus(tokenAmount1.times(price1))
+    let result = poolNotLowLiquidity(token0.id, tokenAmount0, token1.id, tokenAmount1)
+    if (result == 0) {
+      return tokenAmount0.times(price0).times(TWO_BD)
+    } else if (result == 1) {
+      return tokenAmount1.times(price1).times(TWO_BD)
+    } else if (result == 2) {
+      return tokenAmount0.times(price0).plus(tokenAmount1.times(price1))
+    } else {
+      return ZERO_BD
+    }
   }
 
   // take double value of the whitelisted token amount
   if (WHITELIST.includes(token0.id) && !WHITELIST.includes(token1.id)) {
-    return tokenAmount0.times(price0).times(BigDecimal.fromString('2'))
+    let result = poolNotLowLiquidity(token0.id, tokenAmount0, '', ZERO_BD)
+    if (result == 0) {
+      return tokenAmount0.times(price0).times(TWO_BD)
+    } else {
+      return ZERO_BD
+    }
   }
 
   // take double value of the whitelisted token amount
   if (!WHITELIST.includes(token0.id) && WHITELIST.includes(token1.id)) {
-    return tokenAmount1.times(price1).times(BigDecimal.fromString('2'))
+    let result = poolNotLowLiquidity('', ZERO_BD, token1.id, tokenAmount1)
+    if (result == 1) {
+      return tokenAmount1.times(price1).times(TWO_BD)
+    } else {
+      return ZERO_BD
+    }
   }
 
   // neither token is on white list, tracked volume is 0
   return ZERO_BD
+}
+
+/*
+LOGIC
+- if price is fetched from pool w low liquidity then value of token can be absurdly high
+- so set a threshold that if whitelisted asset is being used to determine price, then
+  the amount of the whitelisted asset in a pool (reserve) must be >= 0.5 % of
+  the amount of whitelisted asset in pool with highest whitelisted asset reserve tokens
+  
+POSSIBLE RETURN VALUES
+- if token0 != ""                 --> -1, 0
+- if token1 != ""                 --> -1, 1
+- if token0 != "" && token1 != "" --> -1, 0, 1, 2
+
+RETURN VALUES
+- -1  -- indicate pool has low liquidity
+- 0/1 -- indicate that token0/token1 has sufficient liquidity
+- 2   -- indicate that both token0 and token1 have sufficient liquidity
+*/
+function poolNotLowLiquidity(
+  token0: string,
+  token0Amount: BigDecimal,
+  token1: string,
+  token1Amount: BigDecimal
+): number {
+  // get all pairs
+  let pairsResult = getAllPairs()
+  if (pairsResult == null) {
+    return -1
+  }
+
+  let pairs = pairsResult as Pair[]
+
+  // max reserve
+  let t0MaxReserve = getMaxReserve(pairs, token0)
+  let t1MaxReserve = getMaxReserve(pairs, token1)
+
+  // threshold
+  let T = BigDecimal.fromString('0.005') // 0.5 %
+  let t0Result = 0,
+    t1Result = 0
+  if (satisfyRatioThreshold(token0Amount, t0MaxReserve, T)) {
+    t0Result = 1
+  }
+
+  if (satisfyRatioThreshold(token1Amount, t1MaxReserve, T)) {
+    t1Result = 1
+  }
+
+  // result
+  if (t0Result == 0 && t1Result == 0) {
+    return -1
+  } else if (t0Result == 0 && t1Result == 1) {
+    return 1
+  } else if (t0Result == 0 && t1Result == 0) {
+    return 0
+  } else if (t0Result == 1 && t1Result == 1) {
+    return 2
+  } else {
+    return -1
+  }
+}
+
+function getAllPairs(): Pair[] | null {
+  let factoryContract = FactoryContract.bind(Address.fromString(FACTORY_ADDRESS))
+  let pairsLengthResult = factoryContract.try_allPairsLength()
+  if (pairsLengthResult.reverted) {
+    return null
+  }
+
+  let pairsLength = pairsLengthResult.value.toI32()
+  // get pair ids
+  let pairIds: Address[] = []
+  for (let i: i32 = 0; i < pairsLength; i++) {
+    let pairId = getPairId(factoryContract, i)
+    if (pairId !== null) {
+      pairIds.push(pairId as Address)
+    }
+  }
+
+  // get pairs
+  let pairs: Pair[] = []
+  for (let i = 0; i < pairIds.length; i++) {
+    let pair = Pair.load(pairIds[i].toHex())
+    if (pair !== null) {
+      pairs.push(pair as Pair)
+    }
+  }
+
+  if (pairs.length == 0) {
+    return null
+  }
+
+  return pairs
+}
+
+function getPairId(contract: FactoryContract, i: i32): Address | null {
+  let pairResult = contract.try_allPairs(BigInt.fromI32(i))
+  if (pairResult.reverted) {
+    return null
+  }
+
+  return pairResult.value
+}
+
+function satisfyRatioThreshold(
+  amount: BigDecimal, 
+  amountMax: BigDecimal, 
+  threshold: BigDecimal
+): boolean {
+  let result = false
+
+  if (amountMax.gt(ZERO_BD)) {
+    let ratio = amount.div(amountMax)
+    if (ratio.ge(threshold)) {
+      result = true
+    }
+  }
+
+  return result
+}
+
+function getMaxReserve(
+  pairs: Pair[],
+  tokenAddress: string
+): BigDecimal {
+  if (tokenAddress == '') {
+    return ZERO_BD
+  }
+
+  let reserveMax = ZERO_BD
+  for (let i = 0; i < pairs.length; i++) {
+    let p = pairs[i]
+
+    if (p.token0 == tokenAddress && reserveMax < p.reserve0) {
+      reserveMax = p.reserve0
+    } else if (p.token1 == tokenAddress && reserveMax < p.reserve1) {
+      reserveMax = p.reserve1
+    }
+  }
+
+  return reserveMax
 }
