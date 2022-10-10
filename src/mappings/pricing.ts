@@ -4,7 +4,7 @@ import { BigDecimal, Address, BigInt } from '@graphprotocol/graph-ts/index'
 import { ZERO_BD, factoryContract, ADDRESS_ZERO, ONE_BD, UNTRACKED_PAIRS } from './helpers'
 
 // for canto, ETH ~ CANTO, USDC ~ NOTE
-const WETH_ADDRESS = '0x4e71a2e537b7f9d9413d3991d37958c0b5e1e503'
+const WETH_ADDRESS = '0x826551890dc65655a0aceca109ab11abdbd7a07b'
 const USDC_WETH_PAIR = '0x1d20635535307208919f0b67c3b2065965a85aa9' // created at 224998
 
 export function getEthPriceInUSD(): BigDecimal {
