@@ -38,7 +38,7 @@ let MINIMUM_LIQUIDITY_THRESHOLD_ETH = BigDecimal.fromString('1')
  * Search through graph to find derived Eth per token.
  * @todo update to be derived ETH (add stablecoin estimates)
  **/
-export function findEthPerToken(token: Token, stable: Boolean): BigDecimal {
+export function findEthPerToken(token: Token, stable: boolean): BigDecimal {
   if (token.id == WETH_ADDRESS) {
     return ONE_BD
   }
