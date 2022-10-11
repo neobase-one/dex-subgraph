@@ -46,6 +46,8 @@ export function findEthPerToken(token: Token, stable: boolean): BigDecimal {
   // loop through whitelist and check if paired with any
   for (let i = 0; i < WHITELIST.length; ++i) {
     let pairAddress = factoryContract.getPair(Address.fromString(token.id), Address.fromString(WHITELIST[i]), stable)
+    // only use wCANTO pair for NOTE
+    if(token.name == "NOTE"){ pairAddress = Address.fromString('0x1d20635535307208919f0b67c3b2065965a85aa9')}
     if (pairAddress.toHexString() != ADDRESS_ZERO) {
       let pair = Pair.load(pairAddress.toHexString())
       if (pair.token0 == token.id && pair.reserveETH.gt(MINIMUM_LIQUIDITY_THRESHOLD_ETH)) {

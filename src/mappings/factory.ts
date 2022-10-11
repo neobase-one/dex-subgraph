@@ -14,8 +14,11 @@ import {
 } from './helpers'
 
 const PAIR_BLACKLIST: string[] = [
-  '0x4ef25aadb83795a61d97c3563db33d107d014cf1', // wCANTO/TOPG
-  '0x30495442a80a46f2e55049a6bd7e17f8481ff76d',  // cINU/wCANTO
+  '0x1228038fdA3A3553C54Fd59Ca7E903349d729f08', // wCANTO/TOPG
+  '0x4ef25aadb83795a61d97c3563db33d107d014cf1', // wCANTO/TOPG duplicate
+  '0x6515baa1880cb46b8f69d8818270c1d9278629da', // INU/wCANTO
+  '0x830fbc440a0a61b429b9ece5b7a4af003537fad2', // cINU/wCANTO
+  '0xc0ca4c03634be128b2758dc74659755aa4e83800', // NOTE/USDC (stable=false)
 ]
 
 export function handleNewPair(event: PairCreated): void {
