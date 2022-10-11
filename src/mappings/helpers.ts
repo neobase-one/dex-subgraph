@@ -29,6 +29,14 @@ export function exponentToBigDecimal(decimals: BigInt): BigDecimal {
   return bd
 }
 
+export function exponentToBigInt(decimals: BigInt): BigInt {
+  let bi = BigInt.fromI32(1)
+  for (let i = ZERO_BI; i.lt(decimals as BigInt); i = i.plus(ONE_BI)) {
+    bi = bi.times(BigInt.fromI32(10))
+  }
+  return bi
+}
+
 export function bigDecimalExp18(): BigDecimal {
   return BigDecimal.fromString('1000000000000000000')
 }
