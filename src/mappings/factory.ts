@@ -14,7 +14,7 @@ import {
 } from './helpers'
 
 const PAIR_BLACKLIST: string[] = [
-  '0x1228038fdA3A3553C54Fd59Ca7E903349d729f08', // wCANTO/TOPG
+  '0x1228038fda3a3553c54fd59ca7e903349d729f08', // wCANTO/TOPG
   '0x4ef25aadb83795a61d97c3563db33d107d014cf1', // wCANTO/TOPG duplicate
   '0x6515baa1880cb46b8f69d8818270c1d9278629da', // INU/wCANTO
   '0x830fbc440a0a61b429b9ece5b7a4af003537fad2', // cINU/wCANTO
