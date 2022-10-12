@@ -46,29 +46,16 @@ export function findEthPerToken(token: Token, stable: boolean): BigDecimal {
 
   // loop through whitelist and check if paired with any
   for (let i = 0; i < WHITELIST.length; ++i) {
-    let pairAddress = factoryContract.getPair(Address.fromString(token.id), Address.fromString(WHITELIST[i]), stable)
-    
-    // only use wCANTO/NOTE pair for NOTE pricing
-    if(token.name == "NOTE"){ pairAddress = Address.fromString('0x1d20635535307208919f0b67c3b2065965a85aa9')}
+    let pairAddress = factoryContract.getPair(Address.fromString(token.id), Address.fromString(WHITELIST[i]))
     if (pairAddress.toHexString() != ADDRESS_ZERO) {
-
       let pair = Pair.load(pairAddress.toHexString())
-      let pairContract = PairContract.bind(pairAddress)
-
-      let token0 = Token.load(pair.token0)
-      let token1 = Token.load(pair.token1)
-
-      if (pair.token0 == token.id) {
-        let priceToken1 = pairContract.try_quote(Address.fromString(token0.id), exponentToBigInt(token0.decimals), BigInt.fromI32(8))
-        if(!priceToken1.reverted){
-          return convertTokenToDecimal(priceToken1.value, token1.decimals).times(token1.derivedETH as BigDecimal) // return token1 per our token * Eth per token 1
-        }
+      if (pair.token0 == token.id && pair.reserveETH.gt(MINIMUM_LIQUIDITY_THRESHOLD_ETH)) {
+        let token1 = Token.load(pair.token1)
+        return pair.token1Price.times(token1.derivedETH as BigDecimal) // return token1 per our token * Eth per token 1
       }
-      if (pair.token1 == token.id) {
-        let priceToken0 = pairContract.try_quote(Address.fromString(token1.id), exponentToBigInt(token1.decimals), BigInt.fromI32(8))
-        if(!priceToken0.reverted){
-          return convertTokenToDecimal(priceToken0.value, token0.decimals).times(token0.derivedETH as BigDecimal) // return token0 per our token * Eth per token 1
-        }
+      if (pair.token1 == token.id && pair.reserveETH.gt(MINIMUM_LIQUIDITY_THRESHOLD_ETH)) {
+        let token0 = Token.load(pair.token0)
+        return pair.token0Price.times(token0.derivedETH as BigDecimal) // return token0 per our token * ETH per token 0
       }
     }
   }
