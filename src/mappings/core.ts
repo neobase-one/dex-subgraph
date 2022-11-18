@@ -25,6 +25,7 @@ import {
   createLiquiditySnapshot,
   exponentToBigInt
 } from './helpers'
+import { log } from '@graphprotocol/graph-ts'
 
 function isCompleteMint(mintId: string): boolean {
   return MintEvent.load(mintId).sender !== null // sufficient checks
