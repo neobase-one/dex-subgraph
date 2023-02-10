@@ -24,7 +24,7 @@ const PAIR_WHITELIST: string[] = [
 ]
 
 export function handleNewPair(event: PairCreated): void {
-  // ignore if pair in blacklist
+  // ignore if pair not in whitelise
   if(!PAIR_WHITELIST.includes(event.params.pair.toHexString())) {
     return
   }
