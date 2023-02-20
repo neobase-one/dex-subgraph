@@ -14,13 +14,13 @@ import {
 } from './helpers'
 
 const PAIR_WHITELIST: string[] = [
-  '0x9571997a66d63958e1b3de9647c22bd6b9e7228c', // note/usdc
-  '0x35db1f3a6a6f07f82c76fcc415db6cfb1a7df833', // note/usdt
-  '0x1d20635535307208919f0b67c3b2065965a85aa9', // note/wCANTO
-  '0x216400ba362d8fce640085755e47075109718c8b', // eth/wCANTO
-  '0x30838619c55b787bafc3a4cd9aea851c1cfb7b19', // wcanto/atom
-  '0xc7a1836a344473d8fd3a9af4ee2c2906b555b4a4', // cbonk/wcanto
-  '0xa08f4c180ce2692b2e7c28e5646f82ab792aff1a', // up/note
+  '0x9571997a66d63958e1b3de9647c22bd6b9e7228c', // NOTE/USDC
+  '0x35db1f3a6a6f07f82c76fcc415db6cfb1a7df833', // NOTE/USDT
+  '0x1d20635535307208919f0b67c3b2065965a85aa9', // NOTE/wCANTO
+  '0x216400ba362d8fce640085755e47075109718c8b', // ETH/wCANTO
+  '0x30838619c55b787bafc3a4cd9aea851c1cfb7b19', // wCANTO/ATOM
+  '0xc7a1836a344473d8fd3a9af4ee2c2906b555b4a4', // CBONK/wCANTO
+  '0xa08f4c180ce2692b2e7c28e5646f82ab792aff1a', // UP/NOTE
 ]
 
 export function handleNewPair(event: PairCreated): void {
