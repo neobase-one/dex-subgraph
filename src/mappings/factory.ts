@@ -13,17 +13,19 @@ import {
   ZERO_BI,
 } from './helpers'
 
-const PAIR_BLACKLIST: string[] = [
-  '0x1228038fda3a3553c54fd59ca7e903349d729f08', // wCANTO/TOPG
-  '0x4ef25aadb83795a61d97c3563db33d107d014cf1', // wCANTO/TOPG duplicate
-  '0x6515baa1880cb46b8f69d8818270c1d9278629da', // INU/wCANTO
-  '0x830fbc440a0a61b429b9ece5b7a4af003537fad2', // cINU/wCANTO
-  '0xc0ca4c03634be128b2758dc74659755aa4e83800', // NOTE/USDC (stable=false)
+const PAIR_WHITELIST: string[] = [
+  '0x9571997a66d63958e1b3de9647c22bd6b9e7228c', // NOTE/USDC
+  '0x35db1f3a6a6f07f82c76fcc415db6cfb1a7df833', // NOTE/USDT
+  '0x1d20635535307208919f0b67c3b2065965a85aa9', // NOTE/wCANTO
+  '0x216400ba362d8fce640085755e47075109718c8b', // ETH/wCANTO
+  '0x30838619c55b787bafc3a4cd9aea851c1cfb7b19', // wCANTO/ATOM
+  '0xc7a1836a344473d8fd3a9af4ee2c2906b555b4a4', // CBONK/wCANTO
+  '0xa08f4c180ce2692b2e7c28e5646f82ab792aff1a', // UP/NOTE
 ]
 
 export function handleNewPair(event: PairCreated): void {
-  // ignore if pair in blacklist
-  if(PAIR_BLACKLIST.includes(event.params.pair.toHexString())) {
+  // ignore if pair not in whitelist
+  if(!PAIR_WHITELIST.includes(event.params.pair.toHexString())) {
     return
   }
 
