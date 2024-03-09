@@ -123,12 +123,11 @@ export function fetchTokenName(tokenAddress: Address): string {
 
 export function fetchTokenTotalSupply(tokenAddress: Address): BigInt {
   let contract = ERC20.bind(tokenAddress)
-  let totalSupplyValue = null
   let totalSupplyResult = contract.try_totalSupply()
   if (!totalSupplyResult.reverted) {
-    totalSupplyValue = totalSupplyResult as i32
+    return totalSupplyResult.value
   }
-  return BigInt.fromI32(totalSupplyValue as i32)
+  return ZERO_BI
 }
 
 export function fetchTokenDecimals(tokenAddress: Address): BigInt {
@@ -155,7 +154,7 @@ export function createLiquidityPosition(exchange: Address, user: Address): Liqui
     .concat(user.toHexString())
   let liquidityTokenBalance = LiquidityPosition.load(id)
   if (liquidityTokenBalance === null) {
-    let pair = Pair.load(exchange.toHexString())
+    let pair = Pair.load(exchange.toHexString())!
     pair.liquidityProviderCount = pair.liquidityProviderCount.plus(ONE_BI)
     liquidityTokenBalance = new LiquidityPosition(id)
     liquidityTokenBalance.liquidityTokenBalance = ZERO_BD
@@ -179,10 +178,12 @@ export function createUser(address: Address): void {
 
 export function createLiquiditySnapshot(position: LiquidityPosition, event: ethereum.Event): void {
   let timestamp = event.block.timestamp.toI32()
-  let bundle = Bundle.load('1')
+  let bundle = Bundle.load('1')!
   let pair = Pair.load(position.pair)
+  if (pair == null) return
   let token0 = Token.load(pair.token0)
   let token1 = Token.load(pair.token1)
+  if (token0 == null || token1 == null) return
 
   // create new snapshot
   let snapshot = new LiquidityPositionSnapshot(position.id.concat(timestamp.toString()))

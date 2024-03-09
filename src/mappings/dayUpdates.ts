@@ -5,7 +5,7 @@ import { PairHourData } from './../types/schema'
 import { FACTORY_ADDRESS, ONE_BI, ZERO_BD, ZERO_BI } from './helpers'
 
 export function updateUniswapDayData(event: ethereum.Event): UniswapDayData {
-  let uniswap = UniswapFactory.load(FACTORY_ADDRESS)
+  let uniswap = UniswapFactory.load(FACTORY_ADDRESS)!
   let timestamp = event.block.timestamp.toI32()
   let dayID = timestamp / 86400
   let dayStartTimestamp = dayID * 86400
@@ -28,7 +28,7 @@ export function updateUniswapDayData(event: ethereum.Event): UniswapDayData {
   return uniswapDayData as UniswapDayData
 }
 
-export function updatePairDayData(event: ethereum.Event): PairDayData {
+export function updatePairDayData(pair: Pair, event: ethereum.Event): PairDayData {
   let timestamp = event.block.timestamp.toI32()
   let dayID = timestamp / 86400
   let dayStartTimestamp = dayID * 86400
@@ -36,7 +36,6 @@ export function updatePairDayData(event: ethereum.Event): PairDayData {
     .toHexString()
     .concat('-')
     .concat(BigInt.fromI32(dayID).toString())
-  let pair = Pair.load(event.address.toHexString())
   let pairDayData = PairDayData.load(dayPairID)
   if (pairDayData === null) {
     pairDayData = new PairDayData(dayPairID)
@@ -60,7 +59,7 @@ export function updatePairDayData(event: ethereum.Event): PairDayData {
   return pairDayData as PairDayData
 }
 
-export function updatePairHourData(event: ethereum.Event): PairHourData {
+export function updatePairHourData(pair: Pair, event: ethereum.Event): PairHourData {
   let timestamp = event.block.timestamp.toI32()
   let hourIndex = timestamp / 3600 // get unique hour within unix history
   let hourStartUnix = hourIndex * 3600 // want the rounded effect
@@ -68,7 +67,6 @@ export function updatePairHourData(event: ethereum.Event): PairHourData {
     .toHexString()
     .concat('-')
     .concat(BigInt.fromI32(hourIndex).toString())
-  let pair = Pair.load(event.address.toHexString())
   let pairHourData = PairHourData.load(hourPairID)
   if (pairHourData === null) {
     pairHourData = new PairHourData(hourPairID)
@@ -91,7 +89,7 @@ export function updatePairHourData(event: ethereum.Event): PairHourData {
 }
 
 export function updateTokenDayData(token: Token, event: ethereum.Event): TokenDayData {
-  let bundle = Bundle.load('1')
+  let bundle = Bundle.load('1')!
   let timestamp = event.block.timestamp.toI32()
   let dayID = timestamp / 86400
   let dayStartTimestamp = dayID * 86400
