@@ -203,3 +203,24 @@ export function createLiquiditySnapshot(position: LiquidityPosition, event: ethe
 export function pairMapKey(token0: string, token1: string): string {
   return token0.toLowerCase() + "-" + token1.toLowerCase()
 }
+
+// Simulates the swap price when X is exchanged for Y i.e. Y_out = computeSwapPrice(Y_reserve, X_reserve) * X_in
+// Note that reserves should be normalized (divided by token decimal) for correct stable pair calculation
+export function computeSwapPrice(reserveY: BigDecimal, reserveX: BigDecimal, isStable: boolean): BigDecimal {
+  if (isStable) {
+    // x^3y + y^3x = constant
+    // -dy/dx = (3x^2y + y^3) / (3y^2x + x^3)
+    if (reserveY.equals(ZERO_BD) && reserveX.equals(ZERO_BD)) return ZERO_BD
+    let three = BigDecimal.fromString('3')
+    let x_2 = reserveX.times(reserveX)
+    let y_2 = reserveY.times(reserveY)
+    let numerator = three.times(x_2).times(reserveY).plus(y_2.times(reserveY))
+    let denominator = three.times(y_2).times(reserveX).plus(x_2.times(reserveX))
+    return numerator.div(denominator)
+  } else {
+    // x * y = constant
+    // -dy/dx = y/x
+    if (reserveX.equals(ZERO_BD)) return ZERO_BD
+    return reserveY.div(reserveX)
+  }
+}
