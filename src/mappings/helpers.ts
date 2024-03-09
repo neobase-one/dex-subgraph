@@ -21,7 +21,7 @@ export let UNTRACKED_PAIRS: string[] = []
 
 export function exponentToBigDecimal(decimals: BigInt): BigDecimal {
   let bd = BigDecimal.fromString('1')
-  for (let i = ZERO_BI; i.lt(decimals as BigInt); i = i.plus(ONE_BI)) {
+  for (let i = ZERO_BI; i.lt(decimals); i = i.plus(ONE_BI)) {
     bd = bd.times(BigDecimal.fromString('10'))
   }
   return bd
@@ -29,7 +29,7 @@ export function exponentToBigDecimal(decimals: BigInt): BigDecimal {
 
 export function exponentToBigInt(decimals: BigInt): BigInt {
   let bi = BigInt.fromI32(1)
-  for (let i = ZERO_BI; i.lt(decimals as BigInt); i = i.plus(ONE_BI)) {
+  for (let i = ZERO_BI; i.lt(decimals); i = i.plus(ONE_BI)) {
     bi = bi.times(BigInt.fromI32(10))
   }
   return bi
@@ -67,7 +67,7 @@ export function fetchTokenSymbol(tokenAddress: Address): string {
   // static definitions overrides
   let staticDefinition = TokenDefinition.fromAddress(tokenAddress)
   if(staticDefinition != null) {
-    return (staticDefinition as TokenDefinition).symbol
+    return (staticDefinition).symbol
   }
 
   let contract = ERC20.bind(tokenAddress)
@@ -95,7 +95,7 @@ export function fetchTokenName(tokenAddress: Address): string {
   // static definitions overrides
   let staticDefinition = TokenDefinition.fromAddress(tokenAddress)
   if(staticDefinition != null) {
-    return (staticDefinition as TokenDefinition).name
+    return (staticDefinition).name
   }
 
   let contract = ERC20.bind(tokenAddress)
@@ -132,17 +132,15 @@ export function fetchTokenDecimals(tokenAddress: Address): BigInt {
   // static definitions overrides
   let staticDefinition = TokenDefinition.fromAddress(tokenAddress)
   if(staticDefinition != null) {
-    return (staticDefinition as TokenDefinition).decimals
+    return (staticDefinition).decimals
   }
 
   let contract = ERC20.bind(tokenAddress)
-  // try types uint8 for decimals
-  let decimalValue = null
   let decimalResult = contract.try_decimals()
   if (!decimalResult.reverted) {
-    decimalValue = decimalResult.value
+    return BigInt.fromI32(decimalResult.value)
   }
-  return BigInt.fromI32(decimalValue as i32)
+  return ZERO_BI
 }
 
 export function createLiquidityPosition(exchange: Address, user: Address): LiquidityPosition {
@@ -162,7 +160,7 @@ export function createLiquidityPosition(exchange: Address, user: Address): Liqui
     pair.save()
   }
   if (liquidityTokenBalance === null) log.error('LiquidityTokenBalance is null', [id])
-  return liquidityTokenBalance as LiquidityPosition
+  return liquidityTokenBalance
 }
 
 export function createUser(address: Address): void {

@@ -25,7 +25,7 @@ export function updateUniswapDayData(event: ethereum.Event): UniswapDayData {
   uniswapDayData.txCount = uniswap.txCount
   uniswapDayData.save()
 
-  return uniswapDayData as UniswapDayData
+  return uniswapDayData
 }
 
 export function updatePairDayData(pair: Pair, event: ethereum.Event): PairDayData {
@@ -56,7 +56,7 @@ export function updatePairDayData(pair: Pair, event: ethereum.Event): PairDayDat
   pairDayData.dailyTxns = pairDayData.dailyTxns.plus(ONE_BI)
   pairDayData.save()
 
-  return pairDayData as PairDayData
+  return pairDayData
 }
 
 export function updatePairHourData(pair: Pair, event: ethereum.Event): PairHourData {
@@ -85,7 +85,7 @@ export function updatePairHourData(pair: Pair, event: ethereum.Event): PairHourD
   pairHourData.hourlyTxns = pairHourData.hourlyTxns.plus(ONE_BI)
   pairHourData.save()
 
-  return pairHourData as PairHourData
+  return pairHourData
 }
 
 export function updateTokenDayData(token: Token, event: ethereum.Event): TokenDayData {
@@ -112,7 +112,7 @@ export function updateTokenDayData(token: Token, event: ethereum.Event): TokenDa
   }
   tokenDayData.priceUSD = token.derivedETH.times(bundle.ethPrice)
   tokenDayData.totalLiquidityToken = token.totalLiquidity
-  tokenDayData.totalLiquidityETH = token.totalLiquidity.times(token.derivedETH as BigDecimal)
+  tokenDayData.totalLiquidityETH = token.totalLiquidity.times(token.derivedETH)
   tokenDayData.totalLiquidityUSD = tokenDayData.totalLiquidityETH.times(bundle.ethPrice)
   tokenDayData.dailyTxns = tokenDayData.dailyTxns.plus(ONE_BI)
   tokenDayData.save()
@@ -123,5 +123,5 @@ export function updateTokenDayData(token: Token, event: ethereum.Event): TokenDa
   // updateStoredTokens(tokenDayData as TokenDayData, dayID)
   // updateStoredPairs(tokenDayData as TokenDayData, dayPairID)
 
-  return tokenDayData as TokenDayData
+  return tokenDayData
 }
