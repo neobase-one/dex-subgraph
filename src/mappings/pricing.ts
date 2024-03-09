@@ -1,7 +1,7 @@
 /* eslint-disable prefer-const */
-import { Pair, Token, Bundle } from '../types/schema'
+import { Pair, Token, Bundle, PairMap } from '../types/schema'
 import { BigDecimal, Address, BigInt } from '@graphprotocol/graph-ts/index'
-import { ZERO_BD, factoryContract, ADDRESS_ZERO, ONE_BD, UNTRACKED_PAIRS, exponentToBigInt, convertTokenToDecimal } from './helpers'
+import { ZERO_BD, ADDRESS_ZERO, ONE_BD, UNTRACKED_PAIRS, exponentToBigInt, convertTokenToDecimal, pairMapKey } from './helpers'
 import { Pair as PairContract } from '../types/templates/Pair/Pair'
 
 // for canto, ETH ~ CANTO, USDC ~ NOTE
@@ -46,7 +46,9 @@ export function findEthPerToken(token: Token, stable: boolean): BigDecimal {
 
   // loop through whitelist and check if paired with any
   for (let i = 0; i < WHITELIST.length; ++i) {
-    let pairAddress = factoryContract.getPair(Address.fromString(token.id), Address.fromString(WHITELIST[i]), stable)
+    let pairMap = PairMap.load(pairMapKey(token.id, WHITELIST[i]));
+    if (pairMap == null) continue;
+    let pairAddress = Address.fromString(pairMap.pairId)
     // only use wCANTO/NOTE pair for NOTE pricing
     if(token.name == "NOTE"){ pairAddress = Address.fromString('0x1d20635535307208919f0b67c3b2065965a85aa9')}
     if (pairAddress.toHexString() != ADDRESS_ZERO) {

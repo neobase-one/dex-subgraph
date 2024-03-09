@@ -301,3 +301,10 @@ type TokenDayData @entity {
   # price stats
   priceUSD: BigDecimal!
 }
+
+type PairMap @entity {
+  # `${address0}-${address1}`
+  id: ID!
+
+  pairId: ID!
+}

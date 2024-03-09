@@ -50,7 +50,6 @@ export function handleTransfer(event: Transfer): void {
   // get pair and load contract
   let pair = Pair.load(event.address.toHexString())
   if (pair === null) return
-  let pairContract = PairContract.bind(event.address)
 
   // liquidity token amount being transfered
   let value = convertTokenToDecimal(event.params.amount, BI_18)
@@ -199,14 +198,14 @@ export function handleTransfer(event: Transfer): void {
 
   if (from.toHexString() != ADDRESS_ZERO && from.toHexString() != pair.id) {
     let fromUserLiquidityPosition = createLiquidityPosition(event.address, from)
-    fromUserLiquidityPosition.liquidityTokenBalance = convertTokenToDecimal(pairContract.balanceOf(from), BI_18)
+    fromUserLiquidityPosition.liquidityTokenBalance = fromUserLiquidityPosition.liquidityTokenBalance.minus(convertTokenToDecimal(event.params.amount, BI_18))
     fromUserLiquidityPosition.save()
     createLiquiditySnapshot(fromUserLiquidityPosition, event)
   }
 
   if (event.params.to.toHexString() != ADDRESS_ZERO && to.toHexString() != pair.id) {
     let toUserLiquidityPosition = createLiquidityPosition(event.address, to)
-    toUserLiquidityPosition.liquidityTokenBalance = convertTokenToDecimal(pairContract.balanceOf(to), BI_18)
+    toUserLiquidityPosition.liquidityTokenBalance = toUserLiquidityPosition.liquidityTokenBalance.plus(convertTokenToDecimal(event.params.amount, BI_18))
     toUserLiquidityPosition.save()
     createLiquiditySnapshot(toUserLiquidityPosition, event)
   }
@@ -221,7 +220,6 @@ export function handleSync(event: Sync): void {
   let token1 = Token.load(pair.token1)
   if (token0 == null || token1 == null) return
   let uniswap = UniswapFactory.load(FACTORY_ADDRESS)!
-  let pairContract = PairContract.bind(Address.fromString(pair.id))
 
   // reset factory liquidity by subtracting onluy tarcked liquidity
   uniswap.totalLiquidityETH = uniswap.totalLiquidityETH.minus(pair.trackedReserveETH as BigDecimal)
@@ -234,22 +232,12 @@ export function handleSync(event: Sync): void {
   pair.reserve1 = convertTokenToDecimal(event.params.reserve1, token1.decimals)
 
   if (pair.reserve1.notEqual(ZERO_BD)) {
-    let currentResult = pairContract.try_current(Address.fromString(token1.id), exponentToBigInt(token1.decimals))
-    if (currentResult.reverted) {
-      pair.token0Price = ZERO_BD
-      log.info("REVERTED: {}", [token0.id,])
-    }
-    else pair.token0Price = convertTokenToDecimal(currentResult.value, token0.decimals)
+    pair.token0Price = pair.reserve0.div(pair.reserve1)
   }
   else pair.token0Price = ZERO_BD
 
   if (pair.reserve0.notEqual(ZERO_BD)){
-    let currentResult = pairContract.try_current(Address.fromString(token0.id), exponentToBigInt(token0.decimals))
-    if (currentResult.reverted) {
-      pair.token1Price = ZERO_BD
-      log.info("REVERTED: {}", [token1.id,])
-    }
-    else pair.token1Price = convertTokenToDecimal(currentResult.value, token1.decimals)
+    pair.token1Price = pair.reserve1.div(pair.reserve0)
   }
   else pair.token1Price = ZERO_BD
 

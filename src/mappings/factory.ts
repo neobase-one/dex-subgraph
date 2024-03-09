@@ -1,7 +1,7 @@
 /* eslint-disable prefer-const */
 import { log } from '@graphprotocol/graph-ts'
 import { PairCreated } from '../types/Factory/Factory'
-import { Bundle, Pair, Token, UniswapFactory } from '../types/schema'
+import { Bundle, Pair, Token, UniswapFactory, PairMap } from '../types/schema'
 import { Pair as PairTemplate } from '../types/templates'
 import {
   FACTORY_ADDRESS,
@@ -11,6 +11,7 @@ import {
   fetchTokenTotalSupply,
   ZERO_BD,
   ZERO_BI,
+  pairMapKey,
 } from './helpers'
 
 export function handleNewPair(event: PairCreated): void {
@@ -113,4 +114,11 @@ export function handleNewPair(event: PairCreated): void {
   token1.save()
   pair.save()
   factory.save()
+
+  let forwardMap = new PairMap(pairMapKey(token0.id, token1.id))
+  forwardMap.pairId = pair.id
+  forwardMap.save()
+  let reverseMap = new PairMap(pairMapKey(token0.id, token1.id))
+  reverseMap.pairId = pair.id
+  reverseMap.save()
 }

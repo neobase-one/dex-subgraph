@@ -16,8 +16,6 @@ export let ZERO_BD = BigDecimal.fromString('0')
 export let ONE_BD = BigDecimal.fromString('1')
 export let BI_18 = BigInt.fromI32(18)
 
-export let factoryContract = FactoryContract.bind(Address.fromString(FACTORY_ADDRESS))
-
 // rebass tokens, dont count in tracked volume
 export let UNTRACKED_PAIRS: string[] = []
 
@@ -202,4 +200,8 @@ export function createLiquiditySnapshot(position: LiquidityPosition, event: ethe
   snapshot.liquidityPosition = position.id
   snapshot.save()
   position.save()
+}
+
+export function pairMapKey(token0: string, token1: string): string {
+  return token0.toLowerCase() + "-" + token1.toLowerCase()
 }
