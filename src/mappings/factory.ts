@@ -118,7 +118,7 @@ export function handleNewPair(event: PairCreated): void {
   let forwardMap = new PairMap(pairMapKey(token0.id, token1.id))
   forwardMap.pairId = pair.id
   forwardMap.save()
-  let reverseMap = new PairMap(pairMapKey(token0.id, token1.id))
+  let reverseMap = new PairMap(pairMapKey(token1.id, token0.id))
   reverseMap.pairId = pair.id
   reverseMap.save()
 }
