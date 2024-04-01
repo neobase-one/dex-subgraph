@@ -115,10 +115,22 @@ export function handleNewPair(event: PairCreated): void {
   pair.save()
   factory.save()
 
-  let forwardMap = new PairMap(pairMapKey(token0.id, token1.id))
-  forwardMap.pairId = pair.id
-  forwardMap.save()
-  let reverseMap = new PairMap(pairMapKey(token1.id, token0.id))
-  reverseMap.pairId = pair.id
-  reverseMap.save()
+  updatePairMap(pairMapKey(token0.id, token1.id), pair.id);
+  updatePairMap(pairMapKey(token1.id, token0.id), pair.id);
+}
+
+function updatePairMap(key: string, pairId: string): void {
+  let map = PairMap.load(key)
+  if (map === null) {
+    map = new PairMap(key)
+    map.pairIds = []
+  }
+  let pairIds = map.pairIds
+  for (let i = 0; i < pairIds.length; i++) {
+    // pair ID already present. No need to insert again
+    if (pairIds[i] == pairId) return;
+  }
+  pairIds.push(pairId)
+  map.pairIds = pairIds
+  map.save()
 }

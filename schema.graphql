@@ -306,5 +306,6 @@ type PairMap @entity {
   # `${address0}-${address1}`
   id: ID!
 
-  pairId: ID!
+  # 2 tokens can have multiple pairs. Store all in a list
+  pairIds: [ID!]!
 }

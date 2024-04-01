@@ -48,12 +48,21 @@ export function findEthPerToken(token: Token, stable: boolean): BigDecimal {
   for (let i = 0; i < WHITELIST.length; ++i) {
     let pairMap = PairMap.load(pairMapKey(token.id, WHITELIST[i]));
     if (pairMap == null) continue;
-    let pairAddress = Address.fromString(pairMap.pairId)
-    // only use wCANTO/NOTE pair for NOTE pricing
-    if(token.name == "NOTE"){ pairAddress = Address.fromString('0x1d20635535307208919f0b67c3b2065965a85aa9')}
-    if (pairAddress.toHexString() != ADDRESS_ZERO) {
-      let pair = Pair.load(pairAddress.toHexString())
+
+    // pick the best pair from list based on highest reserve
+    let pairIds = pairMap.pairIds;
+    let bestPair: Pair | null = null;
+    let bestPairReserve = ZERO_BD;
+    for (let j = 0; j < pairIds.length; j++) {
+      let pair = Pair.load(pairIds[j]);
       if (pair == null) continue
+      if (pair.reserveETH.gt(bestPairReserve)) {
+        bestPair = pair;
+        bestPairReserve = pair.reserveETH;
+      }
+    }
+    if (bestPair != null) {
+      let pair = bestPair;
       if (pair.token0 == token.id && pair.reserveETH.gt(MINIMUM_LIQUIDITY_THRESHOLD_ETH)) {
         let token1 = Token.load(pair.token1)
         if (token1 == null) continue
