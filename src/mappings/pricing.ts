@@ -1,19 +1,23 @@
 /* eslint-disable prefer-const */
 import { Pair, Token, Bundle, PairMap } from '../types/schema'
-import { BigDecimal, Address, BigInt } from '@graphprotocol/graph-ts/index'
-import { ZERO_BD, ADDRESS_ZERO, ONE_BD, UNTRACKED_PAIRS, exponentToBigInt, convertTokenToDecimal, pairMapKey } from './helpers'
-import { Pair as PairContract } from '../types/templates/Pair/Pair'
+import { BigDecimal, BigInt } from '@graphprotocol/graph-ts/index'
+import { ZERO_BD, ONE_BD, UNTRACKED_PAIRS, pairMapKey } from './helpers'
 
 // for canto, ETH ~ CANTO, USDC ~ NOTE
-const WETH_ADDRESS = '0x826551890dc65655a0aceca109ab11abdbd7a07b'
-const USDC_WETH_PAIR = '0x1d20635535307208919f0b67c3b2065965a85aa9' // created at 224998
+export const NOTE_ADDRESS = "0x4e71a2e537b7f9d9413d3991d37958c0b5e1e503"
+export const USDC_ADDRESS = "0x80b5a32e4f032b2a058b4f29ec95eefeeb87adcd"
+export const USDT_ADDRESS = "0xd567b3d7b8fe3c79a1ad8da978812cfc4fa05e75"
+export const ATOM_ADDRESS = "0xeceeefcee421d8062ef8d6b4d814efe4dc898265"
+export const ETH_ADDRESS =  "0x5fd55a1b9fc24967c4db09c513c3ba0dfa7ff687"
+export const WCANTO_ADDRESS = '0x826551890dc65655a0aceca109ab11abdbd7a07b'
+const NOTE_WCANTO_PAIR = "0x1d20635535307208919f0b67c3b2065965a85aa9"
 
 export function getEthPriceInUSD(): BigDecimal {
   // fetch eth prices for each stablecoin
-  let usdcPair = Pair.load(USDC_WETH_PAIR) // note is token0
+  let notePair = Pair.load(NOTE_WCANTO_PAIR) // note is token0
 
-  if (usdcPair !== null) {
-    return usdcPair.token0Price
+  if (notePair !== null) {
+    return notePair.token0Price
   } else {
     return ZERO_BD
   }
@@ -21,12 +25,12 @@ export function getEthPriceInUSD(): BigDecimal {
 
 // token where amounts should contribute to tracked volume and liquidity
 let WHITELIST: string[] = [
-  "0x4e71a2e537b7f9d9413d3991d37958c0b5e1e503", // NOTE
-  "0x80b5a32e4f032b2a058b4f29ec95eefeeb87adcd", // USDC
-  "0xd567b3d7b8fe3c79a1ad8da978812cfc4fa05e75", // USDT
-  "0xeceeefcee421d8062ef8d6b4d814efe4dc898265", // ATOM
-  "0x5fd55a1b9fc24967c4db09c513c3ba0dfa7ff687", // ETH
-  "0x826551890dc65655a0aceca109ab11abdbd7a07b", // wCANTO
+  NOTE_ADDRESS,
+  USDC_ADDRESS,
+  USDT_ADDRESS,
+  ATOM_ADDRESS,
+  ETH_ADDRESS,
+  WCANTO_ADDRESS,
 ]
 
 // minimum liquidity required to count towards tracked volume for pairs with small # of Lps
@@ -40,7 +44,7 @@ let MINIMUM_LIQUIDITY_THRESHOLD_ETH = BigDecimal.fromString('1')
  * @todo update to be derived ETH (add stablecoin estimates)
  **/
 export function findEthPerToken(token: Token, stable: boolean): BigDecimal {
-  if (token.id == WETH_ADDRESS) {
+  if (token.id == WCANTO_ADDRESS) {
     return ONE_BD
   }
 
@@ -53,6 +57,10 @@ export function findEthPerToken(token: Token, stable: boolean): BigDecimal {
     let pairIds = pairMap.pairIds;
     let bestPair: Pair | null = null;
     let bestPairReserve = ZERO_BD;
+    if (token.id == NOTE_ADDRESS) {
+      // only use wCANTO/NOTE pair for NOTE pricing
+      pairIds = [NOTE_WCANTO_PAIR];
+    }
     for (let j = 0; j < pairIds.length; j++) {
       let pair = Pair.load(pairIds[j]);
       if (pair == null) continue
