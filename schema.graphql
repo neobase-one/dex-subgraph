@@ -44,7 +44,7 @@ type Token @entity {
   totalLiquidity: BigDecimal!
 
   # derived prices
-  derivedETH: BigDecimal
+  derivedETH: BigDecimal!
 
   # derived fields
   tokenDayData: [TokenDayData!]! @derivedFrom(field: "token")
@@ -135,9 +135,9 @@ type Transaction @entity {
   timestamp: BigInt!
   # This is not the reverse of Mint.transaction; it is only used to
   # track incomplete mints (similar for burns and swaps)
-  mints: [Mint]!
-  burns: [Burn]!
-  swaps: [Swap]!
+  mints: [Mint!]!
+  burns: [Burn!]!
+  swaps: [Swap!]!
 }
 
 type Mint @entity {
@@ -300,4 +300,12 @@ type TokenDayData @entity {
 
   # price stats
   priceUSD: BigDecimal!
+}
+
+type PairMap @entity {
+  # `${address0}-${address1}`
+  id: ID!
+
+  # 2 tokens can have multiple pairs. Store all in a list
+  pairIds: [ID!]!
 }

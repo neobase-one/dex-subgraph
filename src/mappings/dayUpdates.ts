@@ -5,7 +5,7 @@ import { PairHourData } from './../types/schema'
 import { FACTORY_ADDRESS, ONE_BI, ZERO_BD, ZERO_BI } from './helpers'
 
 export function updateUniswapDayData(event: ethereum.Event): UniswapDayData {
-  let uniswap = UniswapFactory.load(FACTORY_ADDRESS)
+  let uniswap = UniswapFactory.load(FACTORY_ADDRESS)!
   let timestamp = event.block.timestamp.toI32()
   let dayID = timestamp / 86400
   let dayStartTimestamp = dayID * 86400
@@ -25,10 +25,10 @@ export function updateUniswapDayData(event: ethereum.Event): UniswapDayData {
   uniswapDayData.txCount = uniswap.txCount
   uniswapDayData.save()
 
-  return uniswapDayData as UniswapDayData
+  return uniswapDayData
 }
 
-export function updatePairDayData(event: ethereum.Event): PairDayData {
+export function updatePairDayData(pair: Pair, event: ethereum.Event): PairDayData {
   let timestamp = event.block.timestamp.toI32()
   let dayID = timestamp / 86400
   let dayStartTimestamp = dayID * 86400
@@ -36,7 +36,6 @@ export function updatePairDayData(event: ethereum.Event): PairDayData {
     .toHexString()
     .concat('-')
     .concat(BigInt.fromI32(dayID).toString())
-  let pair = Pair.load(event.address.toHexString())
   let pairDayData = PairDayData.load(dayPairID)
   if (pairDayData === null) {
     pairDayData = new PairDayData(dayPairID)
@@ -57,10 +56,10 @@ export function updatePairDayData(event: ethereum.Event): PairDayData {
   pairDayData.dailyTxns = pairDayData.dailyTxns.plus(ONE_BI)
   pairDayData.save()
 
-  return pairDayData as PairDayData
+  return pairDayData
 }
 
-export function updatePairHourData(event: ethereum.Event): PairHourData {
+export function updatePairHourData(pair: Pair, event: ethereum.Event): PairHourData {
   let timestamp = event.block.timestamp.toI32()
   let hourIndex = timestamp / 3600 // get unique hour within unix history
   let hourStartUnix = hourIndex * 3600 // want the rounded effect
@@ -68,7 +67,6 @@ export function updatePairHourData(event: ethereum.Event): PairHourData {
     .toHexString()
     .concat('-')
     .concat(BigInt.fromI32(hourIndex).toString())
-  let pair = Pair.load(event.address.toHexString())
   let pairHourData = PairHourData.load(hourPairID)
   if (pairHourData === null) {
     pairHourData = new PairHourData(hourPairID)
@@ -87,11 +85,11 @@ export function updatePairHourData(event: ethereum.Event): PairHourData {
   pairHourData.hourlyTxns = pairHourData.hourlyTxns.plus(ONE_BI)
   pairHourData.save()
 
-  return pairHourData as PairHourData
+  return pairHourData
 }
 
 export function updateTokenDayData(token: Token, event: ethereum.Event): TokenDayData {
-  let bundle = Bundle.load('1')
+  let bundle = Bundle.load('1')!
   let timestamp = event.block.timestamp.toI32()
   let dayID = timestamp / 86400
   let dayStartTimestamp = dayID * 86400
@@ -114,7 +112,7 @@ export function updateTokenDayData(token: Token, event: ethereum.Event): TokenDa
   }
   tokenDayData.priceUSD = token.derivedETH.times(bundle.ethPrice)
   tokenDayData.totalLiquidityToken = token.totalLiquidity
-  tokenDayData.totalLiquidityETH = token.totalLiquidity.times(token.derivedETH as BigDecimal)
+  tokenDayData.totalLiquidityETH = token.totalLiquidity.times(token.derivedETH)
   tokenDayData.totalLiquidityUSD = tokenDayData.totalLiquidityETH.times(bundle.ethPrice)
   tokenDayData.dailyTxns = tokenDayData.dailyTxns.plus(ONE_BI)
   tokenDayData.save()
@@ -125,5 +123,5 @@ export function updateTokenDayData(token: Token, event: ethereum.Event): TokenDa
   // updateStoredTokens(tokenDayData as TokenDayData, dayID)
   // updateStoredPairs(tokenDayData as TokenDayData, dayPairID)
 
-  return tokenDayData as TokenDayData
+  return tokenDayData
 }

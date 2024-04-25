@@ -1,7 +1,7 @@
 /* eslint-disable prefer-const */
 import { log } from '@graphprotocol/graph-ts'
 import { PairCreated } from '../types/Factory/Factory'
-import { Bundle, Pair, Token, UniswapFactory } from '../types/schema'
+import { Bundle, Pair, Token, UniswapFactory, PairMap } from '../types/schema'
 import { Pair as PairTemplate } from '../types/templates'
 import {
   FACTORY_ADDRESS,
@@ -11,6 +11,7 @@ import {
   fetchTokenTotalSupply,
   ZERO_BD,
   ZERO_BI,
+  pairMapKey,
 } from './helpers'
 
 export function handleNewPair(event: PairCreated): void {
@@ -84,7 +85,7 @@ export function handleNewPair(event: PairCreated): void {
     token1.txCount = ZERO_BI
   }
 
-  let pair = new Pair(event.params.pair.toHexString()) as Pair
+  let pair = new Pair(event.params.pair.toHexString())
   pair.token0 = token0.id
   pair.token1 = token1.id
   pair.liquidityProviderCount = ZERO_BI
@@ -113,4 +114,23 @@ export function handleNewPair(event: PairCreated): void {
   token1.save()
   pair.save()
   factory.save()
+
+  updatePairMap(pairMapKey(token0.id, token1.id), pair.id);
+  updatePairMap(pairMapKey(token1.id, token0.id), pair.id);
+}
+
+function updatePairMap(key: string, pairId: string): void {
+  let map = PairMap.load(key)
+  if (map === null) {
+    map = new PairMap(key)
+    map.pairIds = []
+  }
+  let pairIds = map.pairIds
+  for (let i = 0; i < pairIds.length; i++) {
+    // pair ID already present. No need to insert again
+    if (pairIds[i] == pairId) return;
+  }
+  pairIds.push(pairId)
+  map.pairIds = pairIds
+  map.save()
 }

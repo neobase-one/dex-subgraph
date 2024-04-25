@@ -16,14 +16,12 @@ export let ZERO_BD = BigDecimal.fromString('0')
 export let ONE_BD = BigDecimal.fromString('1')
 export let BI_18 = BigInt.fromI32(18)
 
-export let factoryContract = FactoryContract.bind(Address.fromString(FACTORY_ADDRESS))
-
 // rebass tokens, dont count in tracked volume
 export let UNTRACKED_PAIRS: string[] = []
 
 export function exponentToBigDecimal(decimals: BigInt): BigDecimal {
   let bd = BigDecimal.fromString('1')
-  for (let i = ZERO_BI; i.lt(decimals as BigInt); i = i.plus(ONE_BI)) {
+  for (let i = ZERO_BI; i.lt(decimals); i = i.plus(ONE_BI)) {
     bd = bd.times(BigDecimal.fromString('10'))
   }
   return bd
@@ -31,7 +29,7 @@ export function exponentToBigDecimal(decimals: BigInt): BigDecimal {
 
 export function exponentToBigInt(decimals: BigInt): BigInt {
   let bi = BigInt.fromI32(1)
-  for (let i = ZERO_BI; i.lt(decimals as BigInt); i = i.plus(ONE_BI)) {
+  for (let i = ZERO_BI; i.lt(decimals); i = i.plus(ONE_BI)) {
     bi = bi.times(BigInt.fromI32(10))
   }
   return bi
@@ -69,7 +67,7 @@ export function fetchTokenSymbol(tokenAddress: Address): string {
   // static definitions overrides
   let staticDefinition = TokenDefinition.fromAddress(tokenAddress)
   if(staticDefinition != null) {
-    return (staticDefinition as TokenDefinition).symbol
+    return (staticDefinition).symbol
   }
 
   let contract = ERC20.bind(tokenAddress)
@@ -97,7 +95,7 @@ export function fetchTokenName(tokenAddress: Address): string {
   // static definitions overrides
   let staticDefinition = TokenDefinition.fromAddress(tokenAddress)
   if(staticDefinition != null) {
-    return (staticDefinition as TokenDefinition).name
+    return (staticDefinition).name
   }
 
   let contract = ERC20.bind(tokenAddress)
@@ -123,29 +121,26 @@ export function fetchTokenName(tokenAddress: Address): string {
 
 export function fetchTokenTotalSupply(tokenAddress: Address): BigInt {
   let contract = ERC20.bind(tokenAddress)
-  let totalSupplyValue = null
   let totalSupplyResult = contract.try_totalSupply()
   if (!totalSupplyResult.reverted) {
-    totalSupplyValue = totalSupplyResult as i32
+    return totalSupplyResult.value
   }
-  return BigInt.fromI32(totalSupplyValue as i32)
+  return ZERO_BI
 }
 
 export function fetchTokenDecimals(tokenAddress: Address): BigInt {
   // static definitions overrides
   let staticDefinition = TokenDefinition.fromAddress(tokenAddress)
   if(staticDefinition != null) {
-    return (staticDefinition as TokenDefinition).decimals
+    return (staticDefinition).decimals
   }
 
   let contract = ERC20.bind(tokenAddress)
-  // try types uint8 for decimals
-  let decimalValue = null
   let decimalResult = contract.try_decimals()
   if (!decimalResult.reverted) {
-    decimalValue = decimalResult.value
+    return BigInt.fromI32(decimalResult.value)
   }
-  return BigInt.fromI32(decimalValue as i32)
+  return ZERO_BI
 }
 
 export function createLiquidityPosition(exchange: Address, user: Address): LiquidityPosition {
@@ -155,7 +150,7 @@ export function createLiquidityPosition(exchange: Address, user: Address): Liqui
     .concat(user.toHexString())
   let liquidityTokenBalance = LiquidityPosition.load(id)
   if (liquidityTokenBalance === null) {
-    let pair = Pair.load(exchange.toHexString())
+    let pair = Pair.load(exchange.toHexString())!
     pair.liquidityProviderCount = pair.liquidityProviderCount.plus(ONE_BI)
     liquidityTokenBalance = new LiquidityPosition(id)
     liquidityTokenBalance.liquidityTokenBalance = ZERO_BD
@@ -165,7 +160,7 @@ export function createLiquidityPosition(exchange: Address, user: Address): Liqui
     pair.save()
   }
   if (liquidityTokenBalance === null) log.error('LiquidityTokenBalance is null', [id])
-  return liquidityTokenBalance as LiquidityPosition
+  return liquidityTokenBalance
 }
 
 export function createUser(address: Address): void {
@@ -179,10 +174,12 @@ export function createUser(address: Address): void {
 
 export function createLiquiditySnapshot(position: LiquidityPosition, event: ethereum.Event): void {
   let timestamp = event.block.timestamp.toI32()
-  let bundle = Bundle.load('1')
+  let bundle = Bundle.load('1')!
   let pair = Pair.load(position.pair)
+  if (pair == null) return
   let token0 = Token.load(pair.token0)
   let token1 = Token.load(pair.token1)
+  if (token0 == null || token1 == null) return
 
   // create new snapshot
   let snapshot = new LiquidityPositionSnapshot(position.id.concat(timestamp.toString()))
@@ -201,4 +198,29 @@ export function createLiquiditySnapshot(position: LiquidityPosition, event: ethe
   snapshot.liquidityPosition = position.id
   snapshot.save()
   position.save()
+}
+
+export function pairMapKey(token0: string, token1: string): string {
+  return token0.toLowerCase() + "-" + token1.toLowerCase()
+}
+
+// Simulates the swap price when X is exchanged for Y i.e. Y_out = computeSwapPrice(Y_reserve, X_reserve) * X_in
+// Note that reserves should be normalized (divided by token decimal) for correct stable pair calculation
+export function computeSwapPrice(reserveY: BigDecimal, reserveX: BigDecimal, isStable: boolean): BigDecimal {
+  if (isStable) {
+    // x^3y + y^3x = constant
+    // -dy/dx = (3x^2y + y^3) / (3y^2x + x^3)
+    if (reserveY.equals(ZERO_BD) && reserveX.equals(ZERO_BD)) return ZERO_BD
+    let three = BigDecimal.fromString('3')
+    let x_2 = reserveX.times(reserveX)
+    let y_2 = reserveY.times(reserveY)
+    let numerator = three.times(x_2).times(reserveY).plus(y_2.times(reserveY))
+    let denominator = three.times(y_2).times(reserveX).plus(x_2.times(reserveX))
+    return numerator.div(denominator)
+  } else {
+    // x * y = constant
+    // -dy/dx = y/x
+    if (reserveX.equals(ZERO_BD)) return ZERO_BD
+    return reserveY.div(reserveX)
+  }
 }
